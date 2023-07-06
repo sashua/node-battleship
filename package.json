@@ -1,21 +1,29 @@
 {
-    "name": "ws_task",
-    "version": "1.0.0",
-    "description": "Template for the WebSocket remote control task",
-    "main": "index.js",
-    "type": "module",
-    "scripts": {
-        "start": "node ./index.js",
-        "start:dev": "nodemon ./index.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "author": "Andrei Auchynnikau",
-    "keywords": [],
-    "license": "ISC",
-    "devDependencies": {
-        "nodemon": "^2.0.16"
-    },
-    "dependencies": {
-        "ws": "^8.8.0"
-    }
+  "name": "node-battleship",
+  "version": "1.0.0",
+  "description": "Battleship Game",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "tsc && cross-env NODE_ENV=production node dist/index.js",
+    "start:dev": "nodemon",
+    "lint": "eslint ./src"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.4.0",
+    "@typescript-eslint/eslint-plugin": "^5.61.0",
+    "@typescript-eslint/parser": "^5.61.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.3.1",
+    "eslint": "^8.44.0",
+    "nodemon": "^2.0.16",
+    "prettier": "^3.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "ws": "^8.8.0"
+  }
 }

@@ -1,5 +1,5 @@
-# dependencies
-/node_modules
+# Dependencies
+node_modules/
 
 # System Files
 .DS_Store
@@ -14,3 +14,7 @@ Thumbs.db
 
 # Logs
 npm-debug.log
+
+# Other stuff
+.env
+dist/
