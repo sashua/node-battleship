@@ -1,15 +1,15 @@
 import { Position, ShipData } from '../types/game-types.js';
 
 export class Ship {
-  private readonly _deckPositions: Position[];
-  private readonly _aroundPositions: Position[];
+  private _deckPositions: Position[];
+  private _aroundPositions: Position[];
   private _health: boolean[];
 
   constructor(
-    private readonly _position: ShipData['position'],
-    private readonly _direction: ShipData['direction'],
-    private readonly _length: ShipData['length'],
-    private readonly _type: ShipData['type']
+    private _position: ShipData['position'],
+    private _direction: ShipData['direction'],
+    private _length: ShipData['length'],
+    private _type: ShipData['type']
   ) {
     this._deckPositions = this.getDeckPositions();
     this._aroundPositions = this.getAroundPositions();
@@ -17,7 +17,7 @@ export class Ship {
   }
 
   // ----------------------------------------------------------------
-  // Getters
+  // Getters & Setters
   // ----------------------------------------------------------------
   public get shipData(): ShipData {
     return {
@@ -38,6 +38,18 @@ export class Ship {
 
   public get aroundPositions() {
     return this._aroundPositions;
+  }
+
+  public set position(position: Position) {
+    this._position = position;
+    this._deckPositions = this.getDeckPositions();
+    this._aroundPositions = this.getAroundPositions();
+  }
+
+  public set direction(direction: boolean) {
+    this._direction = direction;
+    this._deckPositions = this.getDeckPositions();
+    this._aroundPositions = this.getAroundPositions();
   }
 
   // ----------------------------------------------------------------

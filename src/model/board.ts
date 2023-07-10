@@ -9,6 +9,13 @@ export class Board {
   }
 
   // ----------------------------------------------------------------
+  // Getters
+  // ----------------------------------------------------------------
+  get size() {
+    return this._size;
+  }
+
+  // ----------------------------------------------------------------
   // Public Methods
   // ----------------------------------------------------------------
   public getValue(position: Position) {
@@ -39,13 +46,13 @@ export class Board {
     if (!freeIndexes.length) {
       return null;
     }
-    const randomIndex = randomInt(freeIndexes.length - 1);
-    return this.position(randomIndex);
+    const freeIndex = freeIndexes[randomInt(freeIndexes.length - 1)];
+    return this.position(freeIndex);
   }
 
   // ----------------------------------------------------------------
   public isFree(position: Position) {
-    return this.getValue(position) === null;
+    return this.isValid(position) && this.getValue(position) === null;
   }
 
   // ----------------------------------------------------------------

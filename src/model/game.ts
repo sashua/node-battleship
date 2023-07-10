@@ -1,5 +1,5 @@
 import { randomInt } from 'crypto';
-import { MAX_RANDOM_ID } from '../config/index.js';
+import { BOARD_SIZE, BOT_ID, MAX_RANDOM_ID, SHIPS_KIT } from '../config/index.js';
 import { AttackStatus, GameState, Player, Position, ShipData } from '../types/game-types.js';
 import { AttackResultPayload } from '../types/message-types.js';
 import { Board } from './board.js';
@@ -31,8 +31,12 @@ export class Game {
     return this._state;
   }
 
+  public get isPvP() {
+    return !this._players.includes(BOT_ID);
+  }
+
   public get players() {
-    return [...this._players];
+    return this._players.filter((playerId) => playerId !== BOT_ID);
   }
 
   public get currentPlayer() {
@@ -45,6 +49,18 @@ export class Game {
 
   // ----------------------------------------------------------------
   // Public Methods
+  // ----------------------------------------------------------------
+  public addBot() {
+    if (this._state !== GameState.RoomOpened || this._players.length >= 2) {
+      return;
+    }
+    this._players.push(BOT_ID);
+    const ships = this.getRandomlyPlacedShips(SHIPS_KIT, BOARD_SIZE);
+    this._ships.set(BOT_ID, ships);
+    this._boards.set(BOT_ID, new Board(BOARD_SIZE));
+    this._state = GameState.GameCreated;
+  }
+
   // ----------------------------------------------------------------
   public addPlayer(playerId: Player['id']) {
     if (
@@ -69,7 +85,7 @@ export class Game {
         ({ position, direction, length, type }) => new Ship(position, direction, length, type)
       )
     );
-    this._boards.set(playerId, new Board());
+    this._boards.set(playerId, new Board(BOARD_SIZE));
     if (this._ships.size < 2) {
       return;
     }
@@ -78,12 +94,10 @@ export class Game {
   }
 
   // ----------------------------------------------------------------
-  public getPlayersShips() {
-    return this.players.map((playerId) => {
-      const ships: ShipData[] = [];
-      this._ships.get(playerId)?.forEach((ship) => ships.push(ship.shipData));
-      return { playerId, ships };
-    });
+  public getPlayerShips(playerId: Player['id']) {
+    const ships: ShipData[] = [];
+    this._ships.get(playerId)?.forEach((ship) => ships.push(ship.shipData));
+    return ships;
   }
 
   // ----------------------------------------------------------------
@@ -174,6 +188,28 @@ export class Game {
       }
     }
     return null;
+  }
+
+  // ----------------------------------------------------------------
+  private getRandomlyPlacedShips(shipsKit: Pick<ShipData, 'length' | 'type'>[], boardSize: number) {
+    const board = new Board(boardSize);
+    return shipsKit.map(({ length, type }) => {
+      const ship = new Ship({ x: board.size, y: board.size }, Math.random() < 0.5, length, type);
+      this.placeShipRandomly(board, ship);
+      board.setValues([...ship.deckPositions, ...ship.aroundPositions], 'miss');
+      return ship;
+    });
+  }
+
+  private placeShipRandomly(board: Board, ship: Ship) {
+    let position: Position | null;
+    while ((position = board.getRandomFreePosition())) {
+      ship.position = position;
+      if (ship.deckPositions.every((position) => board.isFree(position))) return true;
+      ship.direction = !ship.direction;
+      if (ship.deckPositions.every((position) => board.isFree(position))) return true;
+    }
+    return false;
   }
 
   // ----------------------------------------------------------------

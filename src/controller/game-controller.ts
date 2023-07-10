@@ -1,3 +1,5 @@
+import { randomInt } from 'crypto';
+import { BOT_ID, BOT_MAX_TIMEOUT, BOT_MIN_TIMEOUT } from '../config/index.js';
 import { Game } from '../model/game.js';
 import { GameService } from '../service/game-service.js';
 import { GameState, Player, ShipData } from '../types/game-types.js';
@@ -74,8 +76,14 @@ export class GameController implements WsController {
   }
 
   // ----------------------------------------------------------------
-  public single_play(data: unknown, ctx: WsContext) {
-    40 + 2;
+  public single_play(_: unknown, ctx: WsContext) {
+    const game = this.gameService.createGame(ctx.id);
+    if (!game) return;
+    game.addBot();
+    if (game.state !== GameState.GameCreated) {
+      this.gameService.closeGame(game.id);
+    }
+    ctx.send(this.createCreateGameMessage(game.id, ctx.id));
   }
 
   // ----------------------------------------------------------------
@@ -95,9 +103,9 @@ export class GameController implements WsController {
     if (game.state !== GameState.GameCreated) return;
     const rooms = this.gameService.getOpenedRooms();
     ctx.broadcast(this.createUpdateRoomMessage(rooms));
-    const messages = this.createCreateGameMessages(game);
-    ctx.broadcast(messages[0], [game.players[0]]);
-    ctx.broadcast(messages[1], [game.players[1]]);
+    game.players.forEach((playerId) =>
+      ctx.broadcast(this.createCreateGameMessage(game.id, playerId), [playerId])
+    );
   }
 
   // ----------------------------------------------------------------
@@ -107,15 +115,18 @@ export class GameController implements WsController {
     if (!game) return;
     game.addShips(indexPlayer, ships);
     if (game.state !== GameState.GameStarted) return;
-    game
-      .getPlayersShips()
-      .forEach(({ playerId, ships }) =>
-        ctx.broadcast(this.createStartGameMessage(playerId, ships), [playerId])
-      );
+    game.players.forEach((playerId) =>
+      ctx.broadcast(this.createStartGameMessage(playerId, game.getPlayerShips(playerId)), [
+        playerId,
+      ])
+    );
     ctx.broadcast(this.createTurnMessage(game), game.players);
+    if (!game.isPvP && game.state === GameState.GameStarted && game.currentPlayer === BOT_ID) {
+      this.botAttack(game, ctx);
+    }
   }
 
-  // ---------------------c-------------------------------------------
+  // ----------------------------------------------------------------
   public attack(data: unknown, ctx: WsContext) {
     const { gameId, x, y, indexPlayer } = data as AttackPayload;
     const game = this.gameService.getGame(gameId);
@@ -123,11 +134,16 @@ export class GameController implements WsController {
     const results = game.attack(indexPlayer, { x, y });
     ctx.broadcast(this.createAttackResultMessages(results), game.players);
     ctx.broadcast(this.createTurnMessage(game), game.players);
+    if (!game.isPvP && game.state === GameState.GameStarted && game.currentPlayer === BOT_ID) {
+      this.botAttack(game, ctx);
+    }
     if (game.state !== GameState.GameFinished || !game.winner) return;
     ctx.broadcast(this.createFinishMessage(game.winner), game.players);
-    this.gameService.setWinner(game.winner);
-    const winners = this.gameService.getWinners();
-    ctx.broadcast(this.createUpdateWinnersMessage(winners));
+    if (game.winner !== BOT_ID) {
+      this.gameService.setWinner(game.winner);
+      const winners = this.gameService.getWinners();
+      ctx.broadcast(this.createUpdateWinnersMessage(winners));
+    }
     this.gameService.closeGame(game.id);
   }
 
@@ -144,6 +160,22 @@ export class GameController implements WsController {
   // ----------------------------------------------------------------
   // Private Message Factory Methods
   // ----------------------------------------------------------------
+  private botAttack(game: Game, ctx: WsContext) {
+    setTimeout(
+      () => {
+        const position = game.getRandomAttackPosition(BOT_ID) ?? { x: 0, y: 0 };
+        this.attack(
+          { gameId: game.id, x: position.x, y: position.y, indexPlayer: BOT_ID },
+          { ...ctx, id: BOT_ID }
+        );
+      },
+      randomInt(BOT_MIN_TIMEOUT, BOT_MAX_TIMEOUT)
+    );
+  }
+
+  // ----------------------------------------------------------------
+  // Private Message Factory Methods
+  // ----------------------------------------------------------------
   private createRegMessage = (player?: Player, errorMessage?: string) =>
     this.createMessage<LoginResultPayload>('reg', {
       index: player?.id ?? -1,
@@ -153,10 +185,8 @@ export class GameController implements WsController {
     });
 
   // ----------------------------------------------------------------
-  private createCreateGameMessages = (game: Game) =>
-    game.players.map((playerId) =>
-      this.createMessage<CreateGamePayload>('create_game', { idGame: game.id, idPlayer: playerId })
-    );
+  private createCreateGameMessage = (gameID: Game['id'], playerId: Player['id']) =>
+    this.createMessage<CreateGamePayload>('create_game', { idGame: gameID, idPlayer: playerId });
 
   // ----------------------------------------------------------------
   private createUpdateRoomMessage = (games: Game[]) =>
