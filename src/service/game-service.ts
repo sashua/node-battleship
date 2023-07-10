@@ -1,3 +1,4 @@
+import * as passcrypt from '../lib/passcrypt.js';
 import { Game } from '../model/game.js';
 import { GameState, Player } from '../types/game-types.js';
 import { LoginPayload } from '../types/message-types.js';
@@ -9,13 +10,15 @@ export class GameService {
   // ----------------------------------------------------------------
   // Public Methods
   // ----------------------------------------------------------------
-  public login(playerId: Player['id'], loginPayload: LoginPayload) {
-    let player = this.findPlayerByName(loginPayload.name);
-    if (player) {
+  public login(playerId: Player['id'], { name, password, ...rest }: LoginPayload) {
+    let player = this.findPlayerByName(name);
+    if (!player) {
+      player = { id: playerId, name, password: passcrypt.hash(password), ...rest, wins: 0 };
+    } else if (!passcrypt.compare(password, player.password)) {
+      return null;
+    } else {
       this._players.delete(player.id);
       player.id = playerId;
-    } else {
-      player = { id: playerId, ...loginPayload, wins: 0 };
     }
     this._players.set(playerId, player);
     return player;
@@ -40,7 +43,7 @@ export class GameService {
 
   // ----------------------------------------------------------------
   public getWinners() {
-    return Array.from(this._players.values()).sort((a, b) => a.wins - b.wins);
+    return Array.from(this._players.values()).sort((a, b) => b.wins - a.wins);
   }
 
   // ----------------------------------------------------------------
@@ -55,8 +58,12 @@ export class GameService {
   }
 
   // ----------------------------------------------------------------
-  public getGames() {
-    return this._games.values();
+  public getPlayerGames(playerId: Player['id']) {
+    const games: Game[] = [];
+    for (const game of this._games.values()) {
+      if (game.isPlayer(playerId)) games.push(game);
+    }
+    return games;
   }
 
   // ----------------------------------------------------------------
@@ -70,7 +77,7 @@ export class GameService {
       return null;
     }
     for (const game of this._games.values()) {
-      if (game.validPlayer(playerId)) return null;
+      if (game.isPlayer(playerId)) return null;
     }
     const game = new Game(playerId);
     this._games.set(game.id, game);

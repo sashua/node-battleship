@@ -44,21 +44,7 @@ export class GameController implements WsController {
 
   // ----------------------------------------------------------------
   public onClientClose = (ctx: WsContext) => {
-    for (const game of this.gameService.getGames()) {
-      if (!game.validPlayer(ctx.id)) continue;
-      if (game.state === GameState.RoomOpened) {
-        this.gameService.closeGame(game.id);
-        const rooms = this.gameService.getOpenedRooms();
-        ctx.broadcast(this.createUpdateRoomMessage(rooms));
-      } else if (game.state === GameState.GameCreated || game.state === GameState.GameStarted) {
-        const winner = game.getEnemy(ctx.id);
-        ctx.broadcast(this.createFinishMessage(winner), [winner]);
-        this.gameService.setWinner(winner);
-        const winners = this.gameService.getWinners();
-        ctx.broadcast(this.createUpdateWinnersMessage(winners));
-        this.gameService.closeGame(game.id);
-      }
-    }
+    this.closePlayerGames(ctx.id, ctx);
     this.gameService.logout(ctx.id);
   };
 
@@ -68,6 +54,10 @@ export class GameController implements WsController {
   public reg(data: unknown, ctx: WsContext) {
     const loginPayload = data as LoginPayload;
     const player = this.gameService.login(ctx.id, loginPayload);
+    if (!player) {
+      ctx.send(this.createRegMessage(player, 'Invalid password'));
+      return;
+    }
     const rooms = this.gameService.getOpenedRooms();
     const winners = this.gameService.getWinners();
     ctx.send(this.createRegMessage(player));
@@ -77,6 +67,7 @@ export class GameController implements WsController {
 
   // ----------------------------------------------------------------
   public single_play(_: unknown, ctx: WsContext) {
+    this.closePlayerGames(ctx.id, ctx);
     const game = this.gameService.createGame(ctx.id);
     if (!game) return;
     game.addBot();
@@ -88,6 +79,7 @@ export class GameController implements WsController {
 
   // ----------------------------------------------------------------
   public create_room(_: unknown, ctx: WsContext) {
+    this.closePlayerGames(ctx.id, ctx);
     const game = this.gameService.createGame(ctx.id);
     if (!game) return;
     const rooms = this.gameService.getOpenedRooms();
@@ -99,6 +91,9 @@ export class GameController implements WsController {
     const { indexRoom } = data as AddUserToRoomPayload;
     const game = this.gameService.getGame(indexRoom);
     if (!game) return;
+    if (!game.isPlayer(ctx.id)) {
+      this.closePlayerGames(ctx.id, ctx);
+    }
     game.addPlayer(ctx.id);
     if (game.state !== GameState.GameCreated) return;
     const rooms = this.gameService.getOpenedRooms();
@@ -158,7 +153,7 @@ export class GameController implements WsController {
   }
 
   // ----------------------------------------------------------------
-  // Private Message Factory Methods
+  // Private Methods
   // ----------------------------------------------------------------
   private botAttack(game: Game, ctx: WsContext) {
     setTimeout(
@@ -174,13 +169,40 @@ export class GameController implements WsController {
   }
 
   // ----------------------------------------------------------------
+  private closePlayerGames(playerId: number, ctx: WsContext) {
+    const games = this.gameService.getPlayerGames(playerId);
+    let needUpdateRoomMessage = false;
+    let needUpdateWinnersMessage = false;
+    games.forEach((game) => {
+      if (game.state === GameState.RoomOpened) {
+        this.gameService.closeGame(game.id);
+        needUpdateRoomMessage = true;
+      } else if (game.state === GameState.GameCreated || game.state === GameState.GameStarted) {
+        const winner = game.getEnemy(ctx.id);
+        ctx.broadcast(this.createFinishMessage(winner), [winner]);
+        this.gameService.setWinner(winner);
+        this.gameService.closeGame(game.id);
+        needUpdateWinnersMessage = true;
+      }
+    });
+    if (needUpdateRoomMessage) {
+      const rooms = this.gameService.getOpenedRooms();
+      ctx.broadcast(this.createUpdateRoomMessage(rooms));
+    }
+    if (needUpdateWinnersMessage) {
+      const winners = this.gameService.getWinners();
+      ctx.broadcast(this.createUpdateWinnersMessage(winners));
+    }
+  }
+
+  // ----------------------------------------------------------------
   // Private Message Factory Methods
   // ----------------------------------------------------------------
-  private createRegMessage = (player?: Player, errorMessage?: string) =>
+  private createRegMessage = (player: Player | null, errorMessage?: string) =>
     this.createMessage<LoginResultPayload>('reg', {
       index: player?.id ?? -1,
       name: player?.name ?? '',
-      error: false,
+      error: Boolean(errorMessage),
       errorText: errorMessage ?? '',
     });
 

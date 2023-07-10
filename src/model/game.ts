@@ -66,7 +66,7 @@ export class Game {
     if (
       this._state !== GameState.RoomOpened ||
       this._players.length >= 2 ||
-      this.validPlayer(playerId)
+      this.isPlayer(playerId)
     ) {
       return;
     }
@@ -76,7 +76,7 @@ export class Game {
 
   // ----------------------------------------------------------------
   public addShips(playerId: Player['id'], ships: ShipData[]) {
-    if (this.state !== GameState.GameCreated || !this.validPlayer(playerId)) {
+    if (this.state !== GameState.GameCreated || !this.isPlayer(playerId)) {
       return;
     }
     this._ships.set(
@@ -156,7 +156,7 @@ export class Game {
   }
 
   // ----------------------------------------------------------------
-  public validPlayer(playerId: Player['id']) {
+  public isPlayer(playerId: Player['id']) {
     return this._players.includes(playerId);
   }
 
