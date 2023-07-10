@@ -3,7 +3,7 @@ import { Player, ShipData } from '../types/game-types.js';
 
 dotenv.config();
 
-export const HTTP_PORT = process.env.HTTP_PORT ? Number(process.env.HTTP_PORT) : 8181;
+export const HTTP_PORT = process.env.HTTP_PORT ? Number(process.env.HTTP_PORT) : 3000;
 export const MAX_RANDOM_ID: Player['id'] = 2 ** 48 - 1;
 export const BOT_ID: Player['id'] = -1;
 export const BOT_MIN_TIMEOUT = 750;

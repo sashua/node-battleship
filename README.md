@@ -1,34 +1,56 @@
-# RSSchool NodeJS websocket task template
+# Battleship
 
-> Static http server and base task packages.
-> By default WebSocket client tries to connect to the 3000 port.
+[RSSchool](https://rs.school) _NodeJS-2023-Q2_
+
+This is _"Websocket battleship server"_ [task](https://github.com/AlreadyBored/nodejs-assignments/blob/main/assignments/battleship/assignment.md).
 
 ## Installation
 
-1. Clone/download repo
-2. `npm install`
+You must have [Node.js](https://nodejs.org/en/download) installed on your computer
+
+### 1. Clone or copy this repository locally
+
+```sh
+# by SSH
+git clone git@github.com:sashua/node-battleship.git
+
+# or HTTPS
+git clone https://github.com/sashua/node-battleship.git
+```
+
+### 2. Go to the project directory
+
+```sh
+cd node-battleship
+```
+
+### 3. Switch to `dev` branch and install dependencies
+
+```sh
+git checkout dev
+npm install
+```
+
+### 4. Create `.env` file and set `PORT` environment variable (default port is `3000` if not specified)
+
+```sh
+echo "PORT=3000" > .env
+```
 
 ## Usage
 
-### Development
+### 1. Run the server in production or development mode
 
-`npm run start:dev`
+```sh
+# production mode
+npm run start
 
-- App served @ `http://localhost:8181` with nodemon
+# development mode
+npm run start:dev
+```
 
-### Production
+### 2. Open your browser and enjoy the game
 
-`npm run start`
-
-- App served @ `http://localhost:8181` without nodemon
+[http://localhost:3000](http://localhost:3000)
 
 ---
-
-### All commands
-
-| Command             | Description                                          |
-| ------------------- | ---------------------------------------------------- |
-| `npm run start:dev` | App served @ `http://localhost:8181` with nodemon    |
-| `npm run start`     | App served @ `http://localhost:8181` without nodemon |
-
-**Note**: replace `npm` with `yarn` in `package.json` if you use yarn.
