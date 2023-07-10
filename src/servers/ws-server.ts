@@ -1,19 +1,22 @@
-import { randomInt } from 'crypto';
 import { Server } from 'http';
 import { RawData, WebSocket, WebSocketServer } from 'ws';
-import { MAX_RANDOM_ID } from '../config/index.js';
-import color from '../lib/color.js';
-import { WsContext, WsController, WsMessage } from '../types/ws-types.js';
+import { color } from '../lib/color.js';
+import { randomId } from '../lib/random-id.js';
+import { WsContext, WsController, WsMessage } from './interfaces.js';
+
+interface Dependencies {
+  server: Server;
+  controller: WsController;
+}
 
 export class WsServer extends WebSocketServer {
-  private clientToId = new Map<WebSocket, number>();
-  private idToClient = new Map<number, WebSocket>();
+  private _controller: WsController;
+  private _clientToId = new Map<WebSocket, number>();
+  private _idToClient = new Map<number, WebSocket>();
 
-  constructor(
-    server: Server,
-    private controller: WsController
-  ) {
+  constructor({ server, controller }: Dependencies) {
     super({ server });
+    this._controller = controller;
     this.on('connection', this.onConnection);
     this.on('close', this.onClose);
   }
@@ -57,7 +60,7 @@ export class WsServer extends WebSocketServer {
     try {
       console.log(color.yellow('⋘', rawMessage.toString()));
       const message = this.parseMessage(rawMessage);
-      this.controller.onClientMessage(message, ctx);
+      this._controller.onClientMessage(message, ctx);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.log(color.red('⊘ Internal server error:', message));
@@ -66,7 +69,7 @@ export class WsServer extends WebSocketServer {
 
   // ----------------------------------------------------------------
   private onClientClose = (ctx: WsContext) => () => {
-    this.controller.onClientClose(ctx);
+    this._controller.onClientClose(ctx);
     this.deleteClientById(ctx.id);
     console.log(color.magenta('⊖', `Client ${ctx.id} disconnected`));
   };
@@ -87,9 +90,9 @@ export class WsServer extends WebSocketServer {
 
   // ----------------------------------------------------------------
   private createContext = (ws: WebSocket): WsContext => {
-    const id = randomInt(MAX_RANDOM_ID);
-    this.idToClient.set(id, ws);
-    this.clientToId.set(ws, id);
+    const id = randomId();
+    this._idToClient.set(id, ws);
+    this._clientToId.set(ws, id);
     return {
       id,
       send: (msg: WsMessage | WsMessage[]) =>
@@ -104,15 +107,15 @@ export class WsServer extends WebSocketServer {
 
   // ----------------------------------------------------------------
   private deleteClientById(id: number) {
-    const ws = this.idToClient.get(id);
-    this.idToClient.delete(id);
-    if (ws) this.clientToId.delete(ws);
+    const ws = this._idToClient.get(id);
+    this._idToClient.delete(id);
+    if (ws) this._clientToId.delete(ws);
   }
 
   // ----------------------------------------------------------------
   private getClientsByIds(ids: number[] = []): WebSocket[] {
     return ids.reduce((clients, id) => {
-      const client = this.idToClient.get(id);
+      const client = this._idToClient.get(id);
       if (client) clients.push(client);
       return clients;
     }, [] as WebSocket[]);

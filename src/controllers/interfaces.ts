@@ -1,4 +1,5 @@
-import { AttackStatus, Position, ShipData } from './game-types.js';
+import { AttackStatus, Position } from '../core/interfaces.js';
+import { ShipDto } from '../services/interfaces.js';
 
 export interface LoginPayload {
   name: string;
@@ -36,12 +37,12 @@ export interface UpdateRoomPayload {
 
 export interface AddShipsPayload {
   gameId: number;
-  ships: ShipData[];
+  ships: ShipDto[];
   indexPlayer: number;
 }
 
 export interface StartGamePayload {
-  ships: ShipData[];
+  ships: ShipDto[];
   currentPlayerIndex: number;
 }
 
