@@ -15,17 +15,17 @@ export class InmemoryDB<T extends Data> {
     return this._idMap.get(id) ?? null;
   }
 
-  public findFirst(key: keyof T, value: unknown): T | null {
+  public findFirst(field: keyof T, value: unknown): T | null {
     for (const item of this.findAll()) {
-      if (item[key] === value) return item;
+      if (item[field] === value) return item;
     }
     return null;
   }
 
-  public findMany(key: keyof T, value: unknown): T[] {
+  public findMany(field: keyof T, value: unknown): T[] {
     const items: T[] = [];
     for (const item of this.findAll()) {
-      if (item[key] === value) items.push(item);
+      if (item[field] === value) items.push(item);
     }
     return items;
   }

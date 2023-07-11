@@ -45,18 +45,18 @@ export class GameService {
   // ----------------------------------------------------------------
   public logout(playerId: Player['id']) {
     const rooms = this._roomsDB.findMany('playerId', playerId);
-    rooms.forEach((room) => this._roomsDB.delete(room.id));
+    const closedRooms = rooms.map((room) => this._roomsDB.delete(room.id));
 
-    let gamesCount = 0;
+    const closedGames: Game[] = [];
     for (const game of this._games.values()) {
       if (game.players.includes(playerId)) {
         game.surrender(playerId);
         this._closeFinishedGame(game);
-        gamesCount++;
+        closedGames.push(game);
       }
     }
 
-    return { roomsCount: rooms.length, gamesCount };
+    return { closedRooms, closedGames };
   }
 
   // ----------------------------------------------------------------

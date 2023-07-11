@@ -7,10 +7,10 @@ export interface WsMessage<T = unknown> {
 export interface WsContext {
   id: number;
   send: (msg: WsMessage | WsMessage[]) => void;
-  broadcast: (msg: WsMessage | WsMessage[], clientIds?: number[]) => void;
+  broadcast: (msg: WsMessage | WsMessage[], conn?: number | number[]) => void;
 }
 
 export interface WsController {
-  onClientMessage: (msg: WsMessage, ctx: WsContext) => void;
-  onClientClose: (ctx: WsContext) => void;
+  handleMessage: (msg: WsMessage, ctx: WsContext) => void;
+  handleClose: (ctx: WsContext) => void;
 }

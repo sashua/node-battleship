@@ -138,11 +138,10 @@ export class Game {
 
   // ----------------------------------------------------------------
   public surrender(player: number) {
-    const index = this._getPlayerIndex(player);
-    if (index === -1) {
+    if (!this._players.includes(player)) {
       throw new Error(`Invalid player (game ${this._id}, player ${player})`);
     }
-    this._winner = this._players[index];
+    this._winner = player === this.currentPlayer ? this.enemyPlayer : this.currentPlayer;
   }
 
   // ----------------------------------------------------------------

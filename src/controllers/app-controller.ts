@@ -46,7 +46,7 @@ export class AppController implements WsController {
   // ----------------------------------------------------------------
   // Public Methods
   // ----------------------------------------------------------------
-  public onClientMessage = ({ type, data }: WsMessage, ctx: WsContext) => {
+  public handleMessage = ({ type, data }: WsMessage, ctx: WsContext) => {
     const isValidType = (this.validTypes as string[]).includes(type);
     if (!isValidType) {
       throw new Error(`Invalid message type: ${type}`);
@@ -54,15 +54,20 @@ export class AppController implements WsController {
     this[type as keyof this](data, ctx);
   };
 
-  public onClientClose = (ctx: WsContext) => {
-    const { roomsCount, gamesCount } = this._gameService.logout(ctx.id);
-    if (roomsCount) {
+  public handleClose = (ctx: WsContext) => {
+    const { closedRooms, closedGames } = this._gameService.logout(ctx.id);
+    if (closedRooms.length) {
       const rooms = this._gameService.getRooms();
       ctx.broadcast(updateRoomMessage(rooms));
     }
-    if (gamesCount) {
+    closedGames.forEach((game) => {
+      if (game.winner) {
+        ctx.broadcast(finishMessage(game.winner), game.players);
+      }
+    });
+    if (closedGames.length) {
       const winners = this._gameService.getWinners();
-      ctx.send(updateWinnersMessage(winners));
+      ctx.broadcast(updateWinnersMessage(winners));
     }
   };
 
@@ -90,7 +95,7 @@ export class AppController implements WsController {
   // ----------------------------------------------------------------
   public single_play(_: unknown, ctx: WsContext) {
     const game = this._gameService.startSingeplayer(ctx.id);
-    ctx.broadcast(createGameMessage(game.id, ctx.id), [ctx.id]);
+    ctx.send(createGameMessage(game.id, ctx.id));
 
     const rooms = this._gameService.getRooms();
     ctx.broadcast(updateRoomMessage(rooms));
@@ -111,7 +116,7 @@ export class AppController implements WsController {
     const game = this._gameService.joinRoom(indexRoom, ctx.id);
     if (!game) return;
     game.players.forEach((playerId) =>
-      ctx.broadcast(createGameMessage(game.id, playerId), [playerId])
+      ctx.broadcast(createGameMessage(game.id, playerId), playerId)
     );
 
     const rooms = this._gameService.getRooms();
@@ -136,7 +141,7 @@ export class AppController implements WsController {
           player,
           ships.map((ship) => this._getShipDto(ship))
         ),
-        [player]
+        player
       )
     );
 

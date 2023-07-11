@@ -40,7 +40,6 @@ export class Ship {
     return this._aroundPositions;
   }
 
-  // ----------------------------------------------------------------
   public get isVertical() {
     return this._isVertical;
   }
@@ -63,24 +62,22 @@ export class Ship {
   // Public Methods
   // ----------------------------------------------------------------
   public getShot(pos: Position): boolean {
-    if (!this.isDeck(pos)) return false;
+    if (!this._isShip(pos)) return false;
     const distance = this._isVertical ? pos.y - this._position.y : pos.x - this._position.x;
     this._health[distance] = false;
     return true;
   }
 
   // ----------------------------------------------------------------
-  public isDeck({ x, y }: Position) {
+  // Private Methods
+  // ----------------------------------------------------------------
+  public _isShip({ x, y }: Position) {
     const xDistance = x - this._position.x;
     const yDistance = y - this._position.y;
     return this._isVertical
       ? xDistance === 0 && yDistance >= 0 && yDistance < this._length
       : yDistance === 0 && xDistance >= 0 && xDistance < this._length;
   }
-
-  // ----------------------------------------------------------------
-  // Private Methods
-  // ----------------------------------------------------------------
 
   private _getPositions(): Position[] {
     const { x, y } = this._position;
@@ -101,7 +98,7 @@ export class Ship {
     const positions: Position[] = [];
     for (let y = topLeft.y; y <= bottomRight.y; y++) {
       for (let x = topLeft.x; x <= bottomRight.x; x++) {
-        if (!this.isDeck({ x, y })) {
+        if (!this._isShip({ x, y })) {
           positions.push({ x, y });
         }
       }
