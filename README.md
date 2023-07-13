@@ -1,8 +1,9 @@
 # Battleship
 
-[RSSchool](https://rs.school) _NodeJS-2023-Q2_
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-272727?style=flat&logo=nodedotjs&logoColor=339933)
 
-This is _"Websocket battleship server"_ [task](https://github.com/AlreadyBored/nodejs-assignments/blob/main/assignments/battleship/assignment.md).
+Implemented a backend server for the battleship game backend using the [ws](https://github.com/websockets/ws) websocket library
 
 ## Installation
 
@@ -39,7 +40,7 @@ echo "PORT=3000" > .env
 
 ## Usage
 
-### 1. Run the server in production or development mode
+Run the server in production or development mode
 
 ```sh
 # production mode
@@ -49,8 +50,12 @@ npm run start
 npm run start:dev
 ```
 
-### 2. Open your browser and enjoy the game
+and then open your browser and enjoy the game 🚀 [http://localhost:3000](http://localhost:3000)
 
-[http://localhost:3000](http://localhost:3000)
+## Notes
 
----
+This project was created as part of the _"Node.js"_ course
+
+[Assignment description](https://github.com/AlreadyBored/nodejs-assignments/blob/main/assignments/battleship/assignment.md)
+
+[![RS School](https://img.shields.io/badge/RS_School-Node.js_2023Q2-F8E856?style=flat)](https://rs.school)
